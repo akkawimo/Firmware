@@ -49,6 +49,8 @@
 #include <uORB/topics/vehicle_magnetometer.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_odometry.h>
+#include <uORB/topics/battery_status.h>
+
 
 #include "ReplayEkf2.hpp"
 
@@ -72,7 +74,7 @@ ReplayEkf2::handleTopicUpdate(Subscription &sub, void *data, std::ifstream &repl
 		return true;
 
 	} else if (sub.orb_meta == ORB_ID(vehicle_status) || sub.orb_meta == ORB_ID(vehicle_land_detected)
-		   || sub.orb_meta == ORB_ID(vehicle_gps_position)) {
+		   || sub.orb_meta == ORB_ID(vehicle_gps_position) || sub.orb_meta == ORB_ID(battery_status) ) {
 		return publishTopic(sub, data);
 	} // else: do not publish
 
@@ -102,13 +104,17 @@ ReplayEkf2::onSubscriptionAdded(Subscription &sub, uint16_t msg_id)
 
 	} else if (sub.orb_meta == ORB_ID(vehicle_visual_odometry)) {
 		_vehicle_visual_odometry_msg_id = msg_id;
-	}
+
+	} //else if (sub.orb_meta == ORB_ID(battery_status)) {
+	//	_battery_status_msg_id = msg_id;
+	//}
 
 	// the main loop should only handle publication of the following topics, the sensor topics are
 	// handled separately in publishEkf2Topics()
 	// Note: the GPS is not treated here since not missing data is more important than the accuracy of the timestamp
 	sub.ignored = sub.orb_meta != ORB_ID(ekf2_timestamps) && sub.orb_meta != ORB_ID(vehicle_status)
-		      && sub.orb_meta != ORB_ID(vehicle_land_detected) && sub.orb_meta != ORB_ID(vehicle_gps_position);
+		      && sub.orb_meta != ORB_ID(vehicle_land_detected) && sub.orb_meta != ORB_ID(vehicle_gps_position)
+		      && sub.orb_meta != ORB_ID(battery_status);
 }
 
 bool
@@ -129,6 +135,27 @@ ReplayEkf2::publishEkf2Topics(const ekf2_timestamps_s &ekf2_timestamps, std::ifs
 	handle_sensor_publication(ekf2_timestamps.vehicle_magnetometer_timestamp_rel, _vehicle_magnetometer_msg_id);
 	handle_sensor_publication(ekf2_timestamps.visual_odometry_timestamp_rel, _vehicle_visual_odometry_msg_id);
 
+
+	//uint64_t t = battery_status.timestamp / 100;
+	//findTimestampAndPublish(t, _battery_status_msg_id, replay_file);
+
+	/*
+	// battery_status
+	if (!findTimestampAndPublish(ekf2_timestamps.timestamp / 100, _battery_status_msg_id, replay_file)) {
+		if (_battery_status_msg_id == msg_id_invalid) {
+			// subscription not found yet or battery_status not contained in log
+			return false;
+
+		} else if (!_subscriptions[_battery_status_msg_id]->orb_meta) {
+			return false; // read past end of file
+
+		} else {
+			// we should publish a topic, just publish the same again
+			readTopicDataToBuffer(*_subscriptions[_battery_status_msg_id], replay_file);
+			publishTopic(*_subscriptions[_battery_status_msg_id], _read_buffer.data());
+		}
+	} */
+
 	// sensor_combined: publish last because ekf2 is polling on this
 	if (!findTimestampAndPublish(ekf2_timestamps.timestamp / 100, _sensor_combined_msg_id, replay_file)) {
 		if (_sensor_combined_msg_id == msg_id_invalid) {
@@ -142,6 +169,7 @@ ReplayEkf2::publishEkf2Topics(const ekf2_timestamps_s &ekf2_timestamps, std::ifs
 			// we should publish a topic, just publish the same again
 			readTopicDataToBuffer(*_subscriptions[_sensor_combined_msg_id], replay_file);
 			publishTopic(*_subscriptions[_sensor_combined_msg_id], _read_buffer.data());
+
 		}
 	}
 
@@ -209,6 +237,8 @@ ReplayEkf2::onExitMainLoop()
 	print_sensor_statistics(_vehicle_air_data_msg_id, "vehicle_air_data");
 	print_sensor_statistics(_vehicle_magnetometer_msg_id, "vehicle_magnetometer");
 	print_sensor_statistics(_vehicle_visual_odometry_msg_id, "vehicle_visual_odometry");
+	print_sensor_statistics(_battery_status_msg_id, "battery_status");
+
 }
 
 } // namespace px4

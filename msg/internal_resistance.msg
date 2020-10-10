@@ -1,0 +1,26 @@
+uint64 timestamp
+
+float32 voltage_prediction_error
+float32 r_transient
+float32 r_steady_state
+float32 voltage_open_circuit
+float32 bat1_r_internal
+float32 current
+float32 voltage
+float32 voltage_prediction
+float32 current_dot
+float32 battery_sampling_period
+float32 call_back_sampling_period
+float32 current_prev
+float32 a_d
+float32 b_d_0
+float32 b_d_1
+float32 b_d_2
+float32 p_0
+float32 p_1
+float32 p_2
+float32 p_3
+float32 s_0
+float32 s_1
+float32 s_2
+float32 s_3
