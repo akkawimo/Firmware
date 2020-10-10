@@ -212,6 +212,10 @@ sensors start
 commander start
 navigator start
 
+if param greater -s INTEG_ACCEL_EN 0
+then
+	integrated_accel start
+fi
 
 if ! param compare -s MNT_MODE_IN -1
 then

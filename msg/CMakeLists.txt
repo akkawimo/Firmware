@@ -65,6 +65,7 @@ set(msg_files
 	gps_inject_data.msg
 	home_position.msg
 	input_rc.msg
+	integrated_accel.msg
 	iridiumsbd_status.msg
 	irlock_report.msg
 	landing_gear.msg
