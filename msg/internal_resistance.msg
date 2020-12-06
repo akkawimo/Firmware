@@ -12,10 +12,7 @@ float32 current_dot
 float32 battery_sampling_period
 float32 call_back_sampling_period
 float32 current_prev
-float32 a_d
-float32 b_d_0
-float32 b_d_1
-float32 b_d_2
+float32 v_dot_prediction_prev
 float32 p_0
 float32 p_1
 float32 p_2
@@ -24,3 +21,7 @@ float32 s_0
 float32 s_1
 float32 s_2
 float32 s_3
+uint64 time_since_param_write
+float32 best_prediction
+float32 best_prediction_error
+bool best_prediction_error_reset

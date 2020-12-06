@@ -11,9 +11,6 @@
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/internal_resistance.h>
 
-#include <matrix/math.hpp>
-#include <lib/mathlib/mathlib.h>
-
 class InternalRes : public ModuleBase<InternalRes>, public ModuleParams, public px4::WorkItem
 {
 public:
@@ -32,7 +29,9 @@ public:
 
 	int print_status() override;
 
+	void write_internal_resistance();
 
+	float extract_parameters();
 
 private:
 	void Run() override;
@@ -40,33 +39,31 @@ private:
 	internal_resistance_s inter_res;
 	battery_status_s battery_status;
 
-	void update_parameter_vector(float voltage_prediction_error);
-
-	float update_voltage_prediction(hrt_abstime sampling_period);
-
 	hrt_abstime battery_time_prev;
-	hrt_abstime internal_res_time_prev;
 
+	hrt_abstime last_param_write_time;
 
-	float p_0 = 1;
-	float p_1 = (0.1 +0.05)/(5*0.05);
-	float p_2 = 1/(5*0.05);
-	float p_3 = 12.6/(5*0.05);
+	float p_0 = 0.0f;
+	float p_1 = 0.0f;
+	float p_2 = 0.0f;
+	float p_3 = 0.0f;
 
-	struct battery_parameters
-	{
-	float r_steady_state;
-	float r_transient;
-	float capacitance;
-	float voltage_open_circuit;
-	};
+	float adaptation_gain_0 = 0.00001f;
+	float adaptation_gain_1 = 0.00001f;
+	float adaptation_gain_2 = 0.00001f;
+	float adaptation_gain_3 = 0.00001f;
 
-
-	//struct battery_parameters extract_parameters();
-
-	float voltage_b_prediction_prev;
+	float voltage_b_prediction_prev = 20.0f;
+	float v_dot_prediction_prev = 0;
 	float current_a_prev;
 
+	float best_prediction_error;
+
+	bool best_prediction_error_reset = true;
+
+	float best_prediction;
+
+	float bat1_r_internal_prev = -1.0f;
 
 	uORB::SubscriptionCallbackWorkItem _battery_sub{this, ORB_ID(battery_status)};
 
@@ -74,7 +71,8 @@ private:
 
 	DEFINE_PARAMETERS(
         (ParamFloat<px4::params::BAT1_R_INTERNAL>) _bat1_r_internal,
-	(ParamInt<px4::params::INTER_RES_EN>) _inter_res_en
+	(ParamInt<px4::params::INTER_RES_EN>) _inter_res_en,
+	(ParamFloat<px4::params::RIN_UPDATE_TIME>) _inter_res_update_period
     	)
 
 };

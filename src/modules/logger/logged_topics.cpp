@@ -66,7 +66,6 @@ void LoggedTopics::add_default_topics()
 	add_topic("hover_thrust_estimate", 100);
 	add_topic("input_rc", 500);
 	add_topic("internal_resistance", 200);
-	//add_topic("internal_resistance");
 	add_topic("manual_control_setpoint", 200);
 	add_topic("mission");
 	add_topic("mission_result");
@@ -173,7 +172,6 @@ void LoggedTopics::add_estimator_replay_topics()
 	add_topic("optical_flow");
 	add_topic("sensor_combined");
 	add_topic("sensor_selection");
-	//add_topic("internal_resistance");
 	add_topic("vehicle_air_data");
 	add_topic("vehicle_land_detected");
 	add_topic("vehicle_magnetometer");
@@ -182,7 +180,6 @@ void LoggedTopics::add_estimator_replay_topics()
 	add_topic("vehicle_visual_odometry_aligned");
 	add_topic_multi("distance_sensor");
 	add_topic_multi("vehicle_gps_position");
-	add_topic_multi("battery_status");
 }
 
 void LoggedTopics::add_thermal_calibration_topics()
