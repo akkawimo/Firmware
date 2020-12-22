@@ -88,8 +88,6 @@ private:
 	uint16_t _vehicle_air_data_msg_id = msg_id_invalid;
 	uint16_t _vehicle_magnetometer_msg_id = msg_id_invalid;
 	uint16_t _vehicle_visual_odometry_msg_id = msg_id_invalid;
-	uint16_t _battery_status_msg_id = msg_id_invalid;
-
 };
 
 } //namespace px4

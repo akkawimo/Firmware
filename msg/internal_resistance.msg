@@ -1,27 +1,18 @@
 uint64 timestamp
 
-float32 voltage_prediction_error
 float32 r_transient
 float32 r_steady_state
 float32 voltage_open_circuit
 float32 bat1_r_internal
-float32 current
+
 float32 voltage
-float32 voltage_prediction
-float32 current_dot
-float32 battery_sampling_period
-float32 call_back_sampling_period
-float32 current_prev
-float32 v_dot_prediction_prev
-float32 p_0
-float32 p_1
-float32 p_2
-float32 p_3
-float32 s_0
-float32 s_1
-float32 s_2
-float32 s_3
-uint64 time_since_param_write
-float32 best_prediction
-float32 best_prediction_error
-bool best_prediction_error_reset
+float32 voltage_estimation
+float32 voltage_estimation_error
+
+float32 param_0
+float32 param_1
+float32 param_2
+float32 param_3
+float32 signal_0
+float32 signal_1
+float32 signal_2
