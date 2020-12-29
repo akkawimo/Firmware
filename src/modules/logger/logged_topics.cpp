@@ -179,7 +179,7 @@ void LoggedTopics::add_estimator_replay_topics()
 	add_topic("vehicle_visual_odometry");
 	add_topic("vehicle_visual_odometry_aligned");
 	add_topic_multi("distance_sensor");
-	add_topic_multi("battery_status", 0, 2);
+	add_topic_multi("battery_status");
 }
 
 void LoggedTopics::add_thermal_calibration_topics()
