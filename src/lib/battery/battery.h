@@ -46,7 +46,9 @@
 #include <uORB/PublicationMulti.hpp>
 #include <uORB/topics/battery_status.h>
 #include <drivers/drv_hrt.h>
+#include <uORB/Subscription.hpp>
 #include <px4_platform_common/module_params.h>
+#include <uORB/topics/internal_resistance.h>
 #include <parameters/param.h>
 #include <board_config.h>
 #include <px4_platform_common/board_common.h>
@@ -112,6 +114,7 @@ protected:
 		param_t capacity;
 		param_t v_load_drop;
 		param_t r_internal;
+		param_t r_in_enabled;
 		param_t low_thr;
 		param_t crit_thr;
 		param_t emergen_thr;
@@ -135,6 +138,7 @@ protected:
 		float capacity;
 		float v_load_drop;
 		float r_internal;
+		int r_in_enabled;
 		float low_thr;
 		float crit_thr;
 		float emergen_thr;
@@ -201,6 +205,10 @@ private:
 	void computeScale();
 
 	uORB::PublicationMulti<battery_status_s> _battery_status_pub{ORB_ID(battery_status)};
+
+	uORB::Subscription _internal_resistance_sub{ORB_ID(internal_resistance)};
+
+	internal_resistance_s inter_res;
 
 	bool _battery_initialized = false;
 	AlphaFilter<float> _voltage_filter_v;
