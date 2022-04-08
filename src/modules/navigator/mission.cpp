@@ -758,7 +758,7 @@ Mission::set_mission_items()
 			user_feedback_done = true;
 		}
 
-		publish_navigator_mission_item(); // for logging
+		publish_navigator_mission_item();
 		_navigator->set_position_setpoint_triplet_updated();
 
 		return;
@@ -979,6 +979,20 @@ Mission::set_mission_items()
 					// if the vehicle drifted off the path during back-transition it should just go straight to the landing point
 					pos_sp_triplet->previous.valid = false;
 
+				} else if (_mission_item.nav_cmd == NAV_CMD_LAND && _work_item_type == WORK_ITEM_TYPE_DEFAULT) {
+					if (_mission_item.land_precision > 0 && _mission_item.land_precision < 3) {
+						new_work_item_type = WORK_ITEM_TYPE_PRECISION_LAND;
+					}
+				}
+
+				/* we just moved to the landing waypoint, now descend */
+				if (_work_item_type == WORK_ITEM_TYPE_MOVE_TO_LAND &&
+				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
+
+					if (_mission_item.land_precision > 0 && _mission_item.land_precision < 3) {
+						new_work_item_type = WORK_ITEM_TYPE_PRECISION_LAND;
+					}
+
 				}
 
 				/* ignore yaw for landing items */
@@ -1112,8 +1126,10 @@ Mission::set_mission_items()
 	} else {
 		// The mission item is not a gate, set the current position setpoint from mission item (is protected against non-position items)
 		// TODO Precision land needs to be refactored: https://github.com/PX4/Firmware/issues/14320
-		mission_apply_limitation(_mission_item);
-		mission_item_to_position_setpoint(_mission_item, &pos_sp_triplet->current);
+		if (new_work_item_type != WORK_ITEM_TYPE_PRECISION_LAND) {
+			mission_apply_limitation(_mission_item);
+			mission_item_to_position_setpoint(_mission_item, &pos_sp_triplet->current);
+		}
 
 		// ELSE: The current position setpoint stays unchanged.
 	}
@@ -1130,6 +1146,13 @@ Mission::set_mission_items()
 
 	/* set current work item type */
 	_work_item_type = new_work_item_type;
+
+	if (new_work_item_type == WORK_ITEM_TYPE_PRECISION_LAND) {
+		_mission_sub_mode = navigator_mission_item_s::MISSION_SUBMODE_PRECLAND;
+
+	} else {
+		_mission_sub_mode = navigator_mission_item_s::MISSION_SUBMODE_NONE;
+	}
 
 	/* require takeoff after landing or idle */
 	if (pos_sp_triplet->current.type == position_setpoint_s::SETPOINT_TYPE_LAND
@@ -1183,7 +1206,7 @@ Mission::set_mission_items()
 		}
 	}
 
-	publish_navigator_mission_item(); // for logging
+	publish_navigator_mission_item();
 	_navigator->set_position_setpoint_triplet_updated();
 }
 
@@ -1868,6 +1891,7 @@ void Mission::publish_navigator_mission_item()
 	navigator_mission_item.instance_count = _navigator->mission_instance_count();
 	navigator_mission_item.sequence_current = _current_mission_index;
 	navigator_mission_item.nav_cmd = _mission_item.nav_cmd;
+	navigator_mission_item.nav_sub_cmd = _mission_sub_mode;
 	navigator_mission_item.latitude = _mission_item.lat;
 	navigator_mission_item.longitude = _mission_item.lon;
 	navigator_mission_item.altitude = _mission_item.altitude;
