@@ -146,6 +146,8 @@ void FlightModeManager::start_flight_task()
 	const bool precland_mission_item_active = _vehicle_status_sub.get().nav_state ==
 			vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION &&
 			_navigator_mission_item_sub.get().nav_sub_cmd == navigator_mission_item_s::WORK_ITEM_TYPE_PRECISION_LAND;
+	const bool precland_flight_mode = _vehicle_status_sub.get().nav_state ==
+					  vehicle_status_s::NAVIGATION_STATE_AUTO_PRECLAND;
 
 	// Do not run any flight task for VTOLs in fixed-wing mode
 	if (_vehicle_status_sub.get().vehicle_type == vehicle_status_s::VEHICLE_TYPE_FIXED_WING) {
