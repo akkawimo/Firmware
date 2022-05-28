@@ -80,6 +80,7 @@ set(msg_files
 	logger_status.msg
 	manual_control_setpoint.msg
 	mavlink_log.msg
+	mc_vel_ctrl_status.msg
 	mission.msg
 	mission_result.msg
 	mount_orientation.msg

@@ -86,6 +86,38 @@ FailureDetector::update(const vehicle_status_s &vehicle_status)
 
 	}
 
+	if (vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED) {
+
+		vehicle_local_position_s vehicle_local_position;
+
+		if (_sub_vehicle_local_position.update(&vehicle_local_position) && !escaped_z_vel_threshold) {
+
+			escaped_z_vel_threshold = (-_param_fd_escape_z_vel.get() > vehicle_local_position.vz);
+
+			if (escaped_z_vel_threshold) {
+				PX4_INFO("Lift Off Detected!");
+			}
+		}
+
+		position_setpoint_triplet_s pos_sp_triplet;
+
+		if (_sub_pos_sp_triplet.update(&pos_sp_triplet)) {
+			in_takeoff = pos_sp_triplet.current.valid && pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF;
+		}
+
+		bool detect_flip = !escaped_z_vel_threshold && in_takeoff;
+
+		if (_param_flip_en.get() &&
+		    detect_flip) {
+
+			updated |= updateFlipStatus();
+
+		}
+
+	}
+
+
+
 	return updated;
 }
 
@@ -149,6 +181,31 @@ FailureDetector::updateAttitudeStatus()
 		}
 
 		updated = true;
+	}
+
+	return updated;
+}
+
+bool
+FailureDetector::updateFlipStatus()
+{
+	bool updated(false);
+
+	rate_ctrl_status_s rate_ctrl_status;
+	//mc_vel_ctrl_status_s mc_vel_ctrl_status;
+	//_sub_mc_vel_ctrl_status.update(&mc_vel_ctrl_status);
+
+	if (_sub_rate_ctrl_status.update(&rate_ctrl_status) && !escaped_z_vel_threshold) {
+
+		bool pr_speed_integ_saturating = (abs(rate_ctrl_status.pitchspeed_integ) >= _param_fd_fail_pri.get()
+						  or abs(rate_ctrl_status.rollspeed_integ) >= _param_fd_fail_pri.get());
+
+		if (pr_speed_integ_saturating && !(_status & FAILURE_FLIP)) {
+			_status |= FAILURE_FLIP;
+			PX4_INFO("Flip Detected!");
+			updated = true;
+		}
+
 	}
 
 	return updated;

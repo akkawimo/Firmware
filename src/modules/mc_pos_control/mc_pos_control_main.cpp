@@ -67,6 +67,8 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_trajectory_waypoint.h>
 #include <uORB/topics/hover_thrust_estimate.h>
+#include <uORB/topics/mc_vel_ctrl_status.h>
+#include <uORB/topics/actuator_armed.h>
 
 #include "PositionControl/PositionControl.hpp"
 #include "Takeoff/Takeoff.hpp"
@@ -108,6 +110,8 @@ private:
 	Takeoff _takeoff; /**< state machine and ramp to bring the vehicle off the ground without jumps */
 
 	uORB::Publication<vehicle_attitude_setpoint_s>	_vehicle_attitude_setpoint_pub;
+	uORB::Publication<mc_vel_ctrl_status_s>	_vel_controller_status_pub{ORB_ID(mc_vel_ctrl_status)};
+
 	uORB::PublicationQueued<vehicle_command_s> _pub_vehicle_command{ORB_ID(vehicle_command)};	 /**< vehicle command publication */
 	orb_advert_t _mavlink_log_pub{nullptr};
 
@@ -123,6 +127,7 @@ private:
 	uORB::Subscription _parameter_update_sub{ORB_ID(parameter_update)};		/**< notification of parameter updates */
 	uORB::Subscription _home_pos_sub{ORB_ID(home_position)}; 			/**< home position */
 	uORB::Subscription _hover_thrust_estimate_sub{ORB_ID(hover_thrust_estimate)};
+	uORB::Subscription _actuator_armed_sub{ORB_ID(actuator_armed)};
 
 	hrt_abstime	_time_stamp_last_loop{0};		/**< time stamp of last loop iteration */
 
@@ -615,6 +620,8 @@ MulticopterPositionControl::Run()
 			const bool flying = _takeoff.getTakeoffState() >= TakeoffState::flight;
 			const bool flying_but_ground_contact = flying && _vehicle_land_detected.ground_contact;
 
+
+
 			if (flying) {
 				_control.setThrustLimits(_param_mpc_thr_min.get(), _param_mpc_thr_max.get());
 
@@ -623,7 +630,21 @@ MulticopterPositionControl::Run()
 				_control.setThrustLimits(0.f, _param_mpc_thr_max.get());
 			}
 
-			if (not_taken_off || flying_but_ground_contact) {
+			/*actuator_armed_s actuator_armed;
+
+			bool reset_control_integral = false;
+
+			if (_actuator_armed_sub.update(&actuator_armed)) {
+
+				const hrt_abstime time_at_arm = actuator_armed.armed_time_ms * 1000;
+
+				if (hrt_elapsed_time(&time_at_arm) < 500_ms) {
+					reset_control_integral =  true;
+				}
+			}
+			*/
+
+			if (not_taken_off || flying_but_ground_contact) { //|| reset_control_integral) {
 				// we are not flying yet and need to avoid any corrections
 				reset_setpoint_to_nan(setpoint);
 				Vector3f(0.f, 0.f, 100.f).copyTo(setpoint.acceleration); // High downwards acceleration to make sure there's no thrust
@@ -633,6 +654,7 @@ MulticopterPositionControl::Run()
 				setpoint.yawspeed = 0.f;
 				// prevent any integrator windup
 				_control.resetIntegral();
+				//PX4_INFO("resetintegral");
 			}
 
 			if (not_taken_off) {
@@ -701,6 +723,12 @@ MulticopterPositionControl::Run()
 			}
 
 			_old_landing_gear_position = gear.landing_gear;
+
+			// publish velocity controller status
+			mc_vel_ctrl_status_s mc_vel_ctrl_status{};
+			_control.getVelControlStatus(mc_vel_ctrl_status);
+			mc_vel_ctrl_status.timestamp = time_stamp_now;
+			_vel_controller_status_pub.publish(mc_vel_ctrl_status);
 
 		} else {
 			// reset the numerical derivatives to not generate d term spikes when coming from non-position controlled operation

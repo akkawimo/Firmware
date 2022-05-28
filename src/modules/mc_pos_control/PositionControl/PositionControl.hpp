@@ -43,6 +43,7 @@
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_constraints.h>
 #include <uORB/topics/vehicle_local_position_setpoint.h>
+#include <uORB/topics/mc_vel_ctrl_status.h>
 
 struct PositionControlStates {
 	matrix::Vector3f position;
@@ -178,6 +179,8 @@ public:
 	 * @param attitude_setpoint reference to struct to fill up
 	 */
 	void getAttitudeSetpoint(vehicle_attitude_setpoint_s &attitude_setpoint) const;
+
+	void getVelControlStatus(mc_vel_ctrl_status_s &mc_vel_ctrl_status);
 
 private:
 	bool _updateSuccessful();

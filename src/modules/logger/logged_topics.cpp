@@ -74,7 +74,8 @@ void LoggedTopics::add_default_topics()
 	add_topic("position_setpoint_triplet", 200);
 	add_topic("px4io_status");
 	add_topic("radio_status");
-	add_topic("rate_ctrl_status", 200);
+	add_topic("rate_ctrl_status");
+	add_topic("mc_vel_ctrl_status");
 	add_topic("rpm", 500);
 	add_topic("safety");
 	add_topic("sensor_combined");
@@ -93,8 +94,8 @@ void LoggedTopics::add_default_topics()
 	add_topic("vehicle_control_mode");
 	add_topic("vehicle_global_position", 200);
 	add_topic("vehicle_land_detected");
-	add_topic("vehicle_local_position", 100);
-	add_topic("vehicle_local_position_setpoint", 100);
+	add_topic("vehicle_local_position");
+	add_topic("vehicle_local_position_setpoint");
 	add_topic("vehicle_magnetometer", 200);
 	add_topic("vehicle_rates_setpoint", 20);
 	add_topic("vehicle_roi", 1000);

@@ -2234,6 +2234,7 @@ Commander::run()
 
 			if (_failure_detector.isFailure()) {
 
+
 				const hrt_abstime time_at_arm = armed.armed_time_ms * 1000;
 
 				if (hrt_elapsed_time(&time_at_arm) < 500_ms) {
@@ -2247,14 +2248,19 @@ Commander::run()
 
 				}
 
+
 				if (hrt_elapsed_time(&_time_at_takeoff) < (1_s * _param_com_lkdown_tko.get())) {
 					// This handles the case where something fails during the early takeoff phase
-					if (!_lockdown_triggered) {
 
+					if (status.failure_detector_status & vehicle_status_s::FAILURE_FLIP) {
+						arm_disarm(false, true, &mavlink_log_pub, arm_disarm_reason_t::FAILURE_DETECTOR);
+						mavlink_log_critical(&mavlink_log_pub, "Flip detected, landing gear stuck or motor/esc failure.");
+					}
+
+					if (!_lockdown_triggered) {
 						armed.lockdown = true;
 						_lockdown_triggered = true;
 						_status_changed = true;
-
 						mavlink_log_emergency(&mavlink_log_pub, "Critical failure detected: lockdown");
 					}
 

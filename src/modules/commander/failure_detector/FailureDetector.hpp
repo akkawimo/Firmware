@@ -49,13 +49,18 @@
 #include <hysteresis/hysteresis.h>
 
 
+
 // subscriptions
 #include <uORB/Subscription.hpp>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
+#include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/esc_status.h>
 #include <uORB/topics/pwm_input.h>
+#include <uORB/topics/mc_vel_ctrl_status.h>
+#include <uORB/topics/rate_ctrl_status.h>
+#include <uORB/topics/position_setpoint_triplet.h>
 
 typedef enum {
 	FAILURE_NONE = vehicle_status_s::FAILURE_NONE,
@@ -63,7 +68,8 @@ typedef enum {
 	FAILURE_PITCH = vehicle_status_s::FAILURE_PITCH,
 	FAILURE_ALT = vehicle_status_s::FAILURE_ALT,
 	FAILURE_EXT = vehicle_status_s::FAILURE_EXT,
-	FAILURE_ARM_ESCS = vehicle_status_s::FAILURE_ARM_ESC
+	FAILURE_ARM_ESCS = vehicle_status_s::FAILURE_ARM_ESC,
+	FAILURE_FLIP = vehicle_status_s::FAILURE_FLIP
 } failure_detector_bitmak;
 
 using uORB::SubscriptionData;
@@ -87,7 +93,11 @@ private:
 		(ParamFloat<px4::params::FD_FAIL_P_TTRI>) _param_fd_fail_p_ttri,
 		(ParamBool<px4::params::FD_EXT_ATS_EN>) _param_fd_ext_ats_en,
 		(ParamInt<px4::params::FD_EXT_ATS_TRIG>) _param_fd_ext_ats_trig,
-		(ParamInt<px4::params::FD_ESCS_EN>) _param_escs_en
+		(ParamInt<px4::params::FD_ESCS_EN>) _param_escs_en,
+		(ParamInt<px4::params::FD_FLIP_EN>) _param_flip_en,
+		(ParamFloat<px4::params::FD_FLIP_PR_I_THR>) _param_fd_fail_pri,
+		(ParamFloat<px4::params::FD_FLIP_RR_I_THR>) _param_fd_fail_rri,
+		(ParamFloat<px4::params::FD_ESCAPE_Z_VEL>) _param_fd_escape_z_vel
 
 	)
 
@@ -95,8 +105,13 @@ private:
 	uORB::Subscription _sub_vehicule_attitude{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _sub_esc_status{ORB_ID(esc_status)};
 	uORB::Subscription _sub_pwm_input{ORB_ID(pwm_input)};
+	uORB::Subscription _sub_rate_ctrl_status{ORB_ID(rate_ctrl_status)};
+	uORB::Subscription _sub_mc_vel_ctrl_status{ORB_ID(mc_vel_ctrl_status)};
+	uORB::Subscription _sub_pos_sp_triplet{ORB_ID(position_setpoint_triplet)};
+	uORB::Subscription _sub_vehicle_local_position{ORB_ID(vehicle_local_position)};
 
-
+	bool in_takeoff{false};
+	bool escaped_z_vel_threshold{false};
 	uint8_t _status{FAILURE_NONE};
 
 	systemlib::Hysteresis _roll_failure_hysteresis{false};
@@ -107,6 +122,7 @@ private:
 	bool resetAttitudeStatus();
 	bool isAttitudeStabilized(const vehicle_status_s &vehicle_status);
 	bool updateAttitudeStatus();
+	bool updateFlipStatus();
 	bool updateExternalAtsStatus();
 	bool updateEscsStatus(const vehicle_status_s &vehicle_status);
 };

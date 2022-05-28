@@ -695,6 +695,7 @@ Mission::set_mission_items()
 				    _work_item_type == WORK_ITEM_TYPE_DEFAULT &&
 				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
 
+
 					new_work_item_type = WORK_ITEM_TYPE_TAKEOFF;
 
 					/* use current mission item as next position item */
