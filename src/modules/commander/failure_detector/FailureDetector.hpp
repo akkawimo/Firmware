@@ -54,6 +54,7 @@
 #include <uORB/Subscription.hpp>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/home_position.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/esc_status.h>
@@ -97,7 +98,7 @@ private:
 		(ParamInt<px4::params::FD_FLIP_EN>) _param_flip_en,
 		(ParamFloat<px4::params::FD_FLIP_PR_I_THR>) _param_fd_fail_pri,
 		(ParamFloat<px4::params::FD_FLIP_RR_I_THR>) _param_fd_fail_rri,
-		(ParamFloat<px4::params::FD_ESCAPE_Z_VEL>) _param_fd_escape_z_vel
+		(ParamFloat<px4::params::FD_ESCAPE_Z>) _param_fd_escape_z
 
 	)
 
@@ -109,9 +110,12 @@ private:
 	uORB::Subscription _sub_mc_vel_ctrl_status{ORB_ID(mc_vel_ctrl_status)};
 	uORB::Subscription _sub_pos_sp_triplet{ORB_ID(position_setpoint_triplet)};
 	uORB::Subscription _sub_vehicle_local_position{ORB_ID(vehicle_local_position)};
+	uORB::Subscription _sub_home_position{ORB_ID(home_position)};
 
 	bool in_takeoff{false};
-	bool escaped_z_vel_threshold{false};
+	bool escaped_z_threshold{false};
+	bool got_home_position{false};
+	float home_z{0.0f};
 	uint8_t _status{FAILURE_NONE};
 
 	systemlib::Hysteresis _roll_failure_hysteresis{false};

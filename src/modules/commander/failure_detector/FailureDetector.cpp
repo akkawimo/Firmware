@@ -90,11 +90,20 @@ FailureDetector::update(const vehicle_status_s &vehicle_status)
 
 		vehicle_local_position_s vehicle_local_position;
 
-		if (_sub_vehicle_local_position.update(&vehicle_local_position) && !escaped_z_vel_threshold) {
+		home_position_s home_position;
 
-			escaped_z_vel_threshold = (-_param_fd_escape_z_vel.get() > vehicle_local_position.vz);
+		if (!got_home_position) {
+			if (_sub_home_position.update(&home_position)) {
+				home_z = home_position.z;
+				got_home_position = true;
+			}
+		}
 
-			if (escaped_z_vel_threshold) {
+		if (_sub_vehicle_local_position.update(&vehicle_local_position) && !escaped_z_threshold && got_home_position) {
+
+			escaped_z_threshold = (-_param_fd_escape_z.get() > (vehicle_local_position.z - home_z));
+
+			if (escaped_z_threshold) {
 				PX4_INFO("Lift Off Detected!");
 			}
 		}
@@ -105,7 +114,7 @@ FailureDetector::update(const vehicle_status_s &vehicle_status)
 			in_takeoff = pos_sp_triplet.current.valid && pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF;
 		}
 
-		bool detect_flip = !escaped_z_vel_threshold && in_takeoff;
+		bool detect_flip = !escaped_z_threshold && in_takeoff;
 
 		if (_param_flip_en.get() &&
 		    detect_flip) {
@@ -195,7 +204,7 @@ FailureDetector::updateFlipStatus()
 	//mc_vel_ctrl_status_s mc_vel_ctrl_status;
 	//_sub_mc_vel_ctrl_status.update(&mc_vel_ctrl_status);
 
-	if (_sub_rate_ctrl_status.update(&rate_ctrl_status) && !escaped_z_vel_threshold) {
+	if (_sub_rate_ctrl_status.update(&rate_ctrl_status) && !escaped_z_threshold) {
 
 		bool pr_speed_integ_saturating = (abs(rate_ctrl_status.pitchspeed_integ) >= _param_fd_fail_pri.get()
 						  or abs(rate_ctrl_status.rollspeed_integ) >= _param_fd_fail_pri.get());
