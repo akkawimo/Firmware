@@ -133,6 +133,9 @@ private:
 
 	int _task_failure_count{0};         /**< counter for task failures */
 
+	bool reset_control_integral{false};
+	bool v_integ_was_reset{false};
+
 	vehicle_status_s 			_vehicle_status{};		/**< vehicle status */
 	/**< vehicle-land-detection: initialze to landed */
 	vehicle_land_detected_s _vehicle_land_detected = {
@@ -630,21 +633,7 @@ MulticopterPositionControl::Run()
 				_control.setThrustLimits(0.f, _param_mpc_thr_max.get());
 			}
 
-			/*actuator_armed_s actuator_armed;
-
-			bool reset_control_integral = false;
-
-			if (_actuator_armed_sub.update(&actuator_armed)) {
-
-				const hrt_abstime time_at_arm = actuator_armed.armed_time_ms * 1000;
-
-				if (hrt_elapsed_time(&time_at_arm) < 500_ms) {
-					reset_control_integral =  true;
-				}
-			}
-			*/
-
-			if (not_taken_off || flying_but_ground_contact) { //|| reset_control_integral) {
+			if (not_taken_off || flying_but_ground_contact) {
 				// we are not flying yet and need to avoid any corrections
 				reset_setpoint_to_nan(setpoint);
 				Vector3f(0.f, 0.f, 100.f).copyTo(setpoint.acceleration); // High downwards acceleration to make sure there's no thrust
@@ -654,7 +643,20 @@ MulticopterPositionControl::Run()
 				setpoint.yawspeed = 0.f;
 				// prevent any integrator windup
 				_control.resetIntegral();
-				//PX4_INFO("resetintegral");
+
+			} else if (reset_control_integral && !v_integ_was_reset) {
+				// we are not flying yet and need to avoid any corrections
+				reset_setpoint_to_nan(setpoint);
+				Vector3f(0.f, 0.f, 100.f).copyTo(setpoint.acceleration); // High downwards acceleration to make sure there's no thrust
+				// set yaw-sp to current yaw
+				// TODO: we need a clean way to disable yaw control
+				setpoint.yaw = _states.yaw;
+				setpoint.yawspeed = 0.f;
+				// prevent any integrator windup
+				_control.resetIntegral();
+
+				PX4_INFO("reset");
+				v_integ_was_reset = true;
 			}
 
 			if (not_taken_off) {
@@ -691,6 +693,23 @@ MulticopterPositionControl::Run()
 			vehicle_local_position_setpoint_s local_pos_sp{};
 			local_pos_sp.timestamp = time_stamp_now;
 			_control.getLocalPositionSetpoint(local_pos_sp);
+
+
+
+			actuator_armed_s actuator_armed;
+
+
+			if (_actuator_armed_sub.update(&actuator_armed) && !reset_control_integral) {
+
+				const hrt_abstime time_at_arm = actuator_armed.armed_time_ms * 1000;
+
+				if (hrt_elapsed_time(&time_at_arm) > 500_ms && local_pos_sp.vz < 0.0f) {
+					reset_control_integral =  true;
+				}
+			}
+
+
+
 
 			// Publish local position setpoint
 			// This message will be used by other modules (such as Landdetector) to determine vehicle intention.
