@@ -6,6 +6,7 @@ uint16 sequence_current          # Sequence of the current mission item
 
 uint16 nav_cmd
 
+# Work Item corresponds to the sub-mode set on the "MAV_CMD_DO_SET_MODE" MAVLink message
 uint8 WORK_ITEM_TYPE_DEFAULT = 0                        # Default mission item
 uint8 WORK_ITEM_TYPE_TAKEOFF = 1                        # Takeoff before moving to waypoint
 uint8 WORK_ITEM_TYPE_MOVE_TO_LAND = 2                   # Move to land waypoint before descent

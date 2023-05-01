@@ -172,8 +172,6 @@ Mission::on_inactivation()
 	_navigator->stop_capturing_images();
 	_navigator->release_gimbal_control();
 
-	_time_mission_deactivated = hrt_absolute_time();
-
 	/* reset so current mission item gets restarted if mission was paused */
 	_work_item_type = navigator_mission_item_s::WORK_ITEM_TYPE_DEFAULT;
 }

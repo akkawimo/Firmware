@@ -85,7 +85,7 @@ using namespace time_literals;
 /**
  * Number of navigation modes that need on_active/on_inactive calls
  */
-#define NAVIGATOR_MODE_ARRAY_SIZE 8
+#define NAVIGATOR_MODE_ARRAY_SIZE 6
 
 class Navigator : public ModuleBase<Navigator>, public ModuleParams
 {

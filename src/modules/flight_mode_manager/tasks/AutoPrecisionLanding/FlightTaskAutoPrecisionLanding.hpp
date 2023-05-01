@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2017-2023 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,11 +58,11 @@
 // TODO: Get ACCEPTANCE_RADIUS from NAV_ACC_RAD
 
 enum class PrecLandState {
-	Start, // Starting state
-	HorizontalApproach, // Positioning over landing target while maintaining altitude
-	DescendAboveTarget, // Stay over landing target while descending
-	FinalApproach, // Final landing approach, even without landing target
+	AutoRTL, // Starting state
 	Search, // Search for landing target
+	MoveAboveTarget, // Positioning over landing target while maintaining altitude
+	DescendAboveTarget, // Stay over landing target while descending
+	TouchingDown, // Final landing approach, even without landing target
 	Fallback // Fallback landing method
 };
 
@@ -77,26 +77,26 @@ public:
 	FlightTaskAutoPrecisionLanding() = default;
 	virtual ~FlightTaskAutoPrecisionLanding() = default;
 
-	bool activate(const vehicle_local_position_setpoint_s &last_setpoint) override;
+	bool activate(const trajectory_setpoint_s &last_setpoint) override;
 
 	bool update() override;
 
 private:
 	// run the control loop for each state
-	void run_state_start();
-	void run_state_horizontal_approach();
-	void run_state_descend_above_target();
-	void run_state_final_approach();
+	void run_state_auto_rtl();
 	void run_state_search();
+	void run_state_move_above_target();
+	void run_state_descend_above_target();
+	void run_state_touching_down();
 	void run_state_fallback();
 
 	// attempt to switch to a different state. Returns true if state change was successful, false otherwise
-	bool switch_to_state_start();
-	bool switch_to_state_horizontal_approach();
-	bool switch_to_state_descend_above_target();
-	bool switch_to_state_final_approach();
-	void switch_to_state_search();
-	void switch_to_state_fallback();
+	bool try_switch_to_state_auto_rtl();
+	void try_switch_to_state_search();
+	bool try_switch_to_state_move_above_target();
+	bool try_switch_to_state_descend_above_target();
+	bool try_switch_to_state_touching_down();
+	void try_switch_to_state_fallback();
 
 	void print_state_switch_message(const char *state_name);
 
@@ -104,12 +104,14 @@ private:
 	bool check_state_conditions(PrecLandState state);
 	void slewrate(float &sp_x, float &sp_y);
 
-	landing_target_pose_s _target_pose{}; /**< precision landing target position */
+	bool hor_acc_radius_check();
 
-	uORB::Subscription _target_pose_sub{ORB_ID(landing_target_pose)};
+	landing_target_pose_s _landing_target_pose{}; /**< precision landing target position */
+
+	uORB::Subscription _landing_target_pose_sub{ORB_ID(landing_target_pose)};
 	uORB::PublicationMulti<precision_landing_status_s> _precision_landing_status_pub{ORB_ID(precision_landing_status)};
 
-	bool _target_pose_valid{false}; /**< whether we have received a landing target position message */
+	bool _landing_target_pose_valid{false}; /**< whether we have received a landing target position message */
 
 	uint64_t _state_start_time{0}; /**< time when we entered current state */
 	uint64_t _last_slewrate_time{0}; /**< time when we last limited setpoint changes */
@@ -121,7 +123,7 @@ private:
 	matrix::Vector2f _sp_pev;
 	matrix::Vector2f _sp_pev_prev;
 
-	PrecLandState _state{PrecLandState::Start};
+	PrecLandState _state{PrecLandState::AutoRTL};
 
 	DEFINE_PARAMETERS_CUSTOM_PARENT(FlightTask,
 					(ParamFloat<px4::params::MPC_LAND_SPEED>) _param_mpc_land_speed, ///< velocity for controlled descend
