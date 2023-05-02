@@ -52,10 +52,13 @@
 #include <uORB/topics/landing_target_pose.h>
 #include <uORB/topics/precision_landing_status.h>
 
-#define SEC2USEC 1000000.0f		// TODO: Get the correct define from some header
 #define STATE_TIMEOUT 10000000 		// [us] Maximum time to spend in any state
 #define ACCEPTANCE_RADIUS 0.20f		// Horizontal acceptance radius for the navigation to the landing target
 // TODO: Get ACCEPTANCE_RADIUS from NAV_ACC_RAD
+
+
+using namespace time_literals;
+
 
 enum class PrecLandState {
 	AutoRTL, // Starting state

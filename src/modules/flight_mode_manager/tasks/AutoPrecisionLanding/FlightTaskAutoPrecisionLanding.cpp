@@ -257,7 +257,7 @@ FlightTaskAutoPrecisionLanding::run_state_search()
 			return;
 		}
 
-	} else if (hrt_absolute_time() - _state_start_time > _param_pld_srch_tout.get()*SEC2USEC) {
+	} else if (hrt_absolute_time() - _state_start_time > _param_pld_srch_tout.get() * 1_s) {
 		// Search timed out and go to fallback
 		PX4_WARN("Search timed out");
 
@@ -389,7 +389,7 @@ bool FlightTaskAutoPrecisionLanding::check_state_conditions(PrecLandState state)
 		if (_state == PrecLandState::DescendAboveTarget) {
 			// if we're close to the ground, we're more critical of target timeouts so we quickly go into descend
 			if (check_state_conditions(PrecLandState::TouchingDown)) {
-				return hrt_absolute_time() - _landing_target_pose.timestamp < 500000; // 0.5s  // TODO: Magic number!
+				return hrt_absolute_time() - _landing_target_pose.timestamp < 5_s; // TODO: Magic number!
 
 			} else {
 				return _landing_target_pose_valid && _landing_target_pose.abs_pos_valid;
@@ -433,7 +433,7 @@ void FlightTaskAutoPrecisionLanding::slewrate(float &sp_x, float &sp_y)
 		return;
 	}
 
-	dt /= SEC2USEC;
+	dt /= 1_s;
 
 	if (_last_slewrate_time == 0) {
 		// running the first time since switching to precland
